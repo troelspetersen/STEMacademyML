@@ -20,34 +20,72 @@ def main():
 
     # Dataset selection
     st.sidebar.header("Datasæt")
-    dataset = st.sidebar.radio("Vælg et datasæt:", ["Huspriser", "Diabetes", "Gletsjer"])
+    dataset = st.sidebar.radio("Vælg et datasæt:", ["Huspriser", "Diabetes", "Gletsjer", "Upload dit eget datasæt"])
 
-    # Display the selected dataset
+    # Display the selected dataset with scrolling enabled and limited to 5 rows tall
     st.header(f"Visualisering af {dataset}")
     if dataset == "Huspriser":
-        st.write(DS1.head())
-        st.download_button(
-            label="Hent Datasæt",
-            data=DS1.to_csv(index=False),
-            file_name="Huspriser.csv",
-            mime="text/csv"
-        )
+        st.dataframe(DS1, height=200, use_container_width=True)
     elif dataset == "Diabetes":
-        st.write(DS2.head())
-        st.download_button(
-            label="Hent Datasæt",
-            data=DS2.to_csv(index=False),
-            file_name="Diabetes.csv",
-            mime="text/csv"
-        )
+        st.dataframe(DS2, height=200, use_container_width=True)
     elif dataset == "Gletsjer":
-        st.write(DS3.head())
-        st.download_button(
-            label="Hent Datasæt",
-            data=DS3.to_csv(index=False),
-            file_name="Gletsjer.csv",
-            mime="text/csv"
-        )
+        st.dataframe(DS3, height=200, use_container_width=True)
+    elif dataset == "Upload dit eget datasæt":
+        st.subheader("Upload dit eget datasæt")
+        uploaded_file = st.file_uploader("Vælg en CSV-fil", type="csv")
+        if uploaded_file is not None:
+            user_dataset = pd.read_csv(uploaded_file)
+            st.write("Her er dit datasæt:")
+            st.dataframe(user_dataset, height=200, use_container_width=True)
+
+            # Dropdown menu to select target column for regression
+            target_column = st.selectbox("Vælg kolonne til regression:", user_dataset.columns, index=len(user_dataset.columns) - 1)
+
+            # Dropdown menu to select error metric
+            error_metric = st.selectbox("Vælg fejlmetrik:", ["MSE", "MAE"])
+
+            # Button to run the model
+            if st.button("Kør regression model"):
+                if target_column:
+                    # Prepare data
+                    X = user_dataset.drop(columns=[target_column])
+                    y = user_dataset[target_column]
+
+                    # Handle missing values
+                    X = X.fillna(0)
+                    y = y.fillna(0)
+
+                    # Import train_test_split before usage
+                    from sklearn.model_selection import train_test_split
+                    from lightgbm import LGBMRegressor
+                    from sklearn.metrics import mean_squared_error
+
+                    # Split data
+                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+                    # Train model
+                    model = LGBMRegressor(random_state=42)
+                    model.fit(X_train, y_train)
+
+                    # Predict and evaluate
+                    y_pred = model.predict(X_test)
+
+                    # Add predictions to the dataset
+                    predictions_df = X_test.copy()
+                    predictions_df[target_column] = y_test.values
+                    predictions_df['Prediction'] = y_pred
+
+                    # Display the dataset with predictions
+                    st.write("Datasæt med forudsigelser:")
+                    st.dataframe(predictions_df, height=200, use_container_width=True)
+
+                    if error_metric == "MSE":
+                        error = mean_squared_error(y_test, y_pred)
+                        st.write(f"Mean Squared Error for regression on {target_column}: {error}")
+                    elif error_metric == "MAE":
+                        from sklearn.metrics import mean_absolute_error
+                        error = mean_absolute_error(y_test, y_pred)
+                        st.write(f"Mean Absolute Error for regression on {target_column}: {error}")
 
     # Add a subtle left-aligned link in the sidebar
     st.sidebar.markdown(
@@ -91,6 +129,10 @@ def main():
                     X = X.fillna(0)
                     y = y.fillna(0)
 
+                    # Import train_test_split before usage
+                    from sklearn.model_selection import train_test_split
+                    from lightgbm import LGBMRegressor
+
                     # Split data
                     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -100,6 +142,15 @@ def main():
 
                     # Predict and evaluate
                     y_pred = model.predict(X_test)
+
+                    # Add predictions to the dataset
+                    predictions_df = X_test.copy()
+                    predictions_df[target_column] = y_test.values
+                    predictions_df['Forudsigelse'] = y_pred
+
+                    # Display the dataset with predictions in a scrollable window
+                    st.write("Datasæt med forudsigelser:")
+                    st.dataframe(predictions_df, height=200, use_container_width=True)
 
                     if error_metric == "MSE":
                         error = mean_squared_error(y_test, y_pred)
@@ -149,6 +200,10 @@ elif error_metric == "MAE":
             st.subheader("Standard Niveau - Gletsjer")
             st.write("Indhold for Standard Niveau og Gletsjer.")
             # Add standard-level content for Gletsjer here
+        elif dataset == "Upload dit eget datasæt":
+            st.subheader("Standard Niveau - Upload dit eget datasæt")
+            st.write("Indhold for Standard Niveau og Upload dit eget datasæt.")
+            # Add standard-level content for uploaded dataset here
 
     elif level == "Avanceret":
         if dataset == "Huspriser":
@@ -163,6 +218,10 @@ elif error_metric == "MAE":
             st.subheader("Avanceret Niveau - Gletsjer")
             st.write("Indhold for Avanceret Niveau og Gletsjer.")
             # Add advanced-level content for Gletsjer here
+        elif dataset == "Upload dit eget datasæt":
+            st.subheader("Avanceret Niveau - Upload dit eget datasæt")
+            st.write("Indhold for Avanceret Niveau og Upload dit eget datasæt.")
+            # Add advanced-level content for uploaded dataset here
 
 if __name__ == "__main__":
     main()
@@ -173,4 +232,10 @@ Strukturer efter Majas tekst for så når den første er færdig så kan vi
 begynde på næste. 
 Lav datasæt for nummer to som næste. 
 Måske tekst til næste. 
+Følg Majas vejledning og Strukturer efter det.
 """
+
+
+# Spørgsmål: Skal vi lave siden så at hele vejledningen står der? 
+# Måske kun hvordan man kører selve koden 
+# fremfor introduktion til hvordan machine learning virker
