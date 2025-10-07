@@ -117,6 +117,7 @@ def main():
             st.write("Du har valgt at arbejde med huspriser. Algoritmen forudsiger prisen af et hus ud fra de resterende variable som du kan se øverst på siden.  \n Nedenfor kan du selv vælge hvordan algoritmen skal vurdere om et spørgsmål den stiller er godt eller dårligt (Se forklaring i PDF).")
 
 
+
             # Removed dropdown menu for selecting regression variable and set it to the last column in the dataset
             # Automatically set the target column to the last column in the dataset
             target_column = DS1.columns[-1]
@@ -221,37 +222,6 @@ elif error_metric == "MAE":
             st.subheader("Avanceret Niveau - Huspriser")
             st.write("Du har valgt at arbejde med huspriser. Nedenfor kan du vælge hvilken variabel du vil forudsige. Som udgangspunkt er dette prisen af huset.")
             # Add advanced-level content for Huspriser here
-            st.write("Avanceret algoritme for Huspriser")
-            target_column = st.selectbox("Vælg kolonne til regression:", DS1.columns, index=len(DS1.columns) - 1)
-
-            # Allow user to select columns for regression
-            selected_columns = st.multiselect("Vælg kolonner til regression:", DS1.columns.tolist(), default=DS1.columns.tolist())
-
-            # Ensure at least one column is selected
-            if not selected_columns:
-                st.error("Vælg mindst én kolonne til regression.")
-            else:
-                # Split data into features and target
-                X = DS1[selected_columns].drop(columns=[target_column])
-                y = DS1[target_column]
-
-                # Train-test split
-                from sklearn.model_selection import train_test_split
-                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-                # Train a regression model using LGBMRegressor
-                from lightgbm import LGBMRegressor
-                model = LGBMRegressor(random_state=42)
-                model.fit(X_train, y_train)
-
-                # Make predictions
-                y_pred = model.predict(X_test)
-
-                # Display results
-                st.write("Model trænet. Her er nogle resultater:")
-                from sklearn.metrics import mean_squared_error
-                mse = mean_squared_error(y_test, y_pred)
-                st.write(f"Mean Squared Error: {mse}")
         elif dataset == "Diabetes":
             st.subheader("Avanceret Niveau - Diabetes")
             st.write("Du har valgt at arbejde med diabetes. Algoritmen forudsiger om en person har diabetes.")
